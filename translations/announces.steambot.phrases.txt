@@ -1,0 +1,51 @@
+﻿"Phrases"
+{
+	"error connecting public message"
+	{
+		"en"		"Error sending steamgroup announcement, please contact an administrator."
+	}
+	
+	"pick an announcement menu title"
+	{
+		"en"		"Pick an announcement:"
+	}
+	
+	"config announcement successfully sent"
+	{
+		"#format"	"{1:s}"
+		"en"		"You have successfully sent an announcement to the steamgroup! [{1}]"
+	}
+	
+	"manual command usage"
+	{
+		"#format"	"{1:s}"
+		"en"		"Usage: {1} <title> <body>"
+	}
+	
+	"manual announcement sent successfully"
+	{
+		"#format"	"{1:s},{2:s}"
+		"en"		"Announcement sent: {1} - {2}"
+	}
+	
+	"announcements config reloaded"
+	{
+		"en"		"Announcements configurations data reloaded successfully."
+	}
+	
+	"error finding configuration file"
+	{
+		"en"		"Error finding configuration file for steambot announcements."
+	}
+	
+	"error parsing empty configuration file"
+	{
+		"en"		"Error parsing configuration file for steambot announcements, It's empty."
+	}
+	
+	"error parsing item in configuration file"
+	{
+		"#format"	"{1:i}"
+		"en"		"Error parsing configuration file for steambot announcements, empty string in section {1}!"
+	}
+}
