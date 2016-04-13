@@ -70,6 +70,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 public void OnPluginStart()
 {
 	LoadTranslations("announces.steambot.phrases.txt");
+	CreateConVar("steambot_announcements_version", PLUGIN_VERSION, PLUGIN_NAME, FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_SPONLY | FCVAR_DONTRECORD);
 	hConVars[0] = CreateConVar("sm_steambot_announcements_status", "1", "Status of the plugin.\n(1 = on, 0 = off)", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	hConVars[1] = CreateConVar("sm_steambot_announcements_bot_ip", "", "IP address to connect to the bot.", FCVAR_NOTIFY);
 	hConVars[2] = CreateConVar("sm_steambot_announcements_bot_port", "", "Port to connect to the bot.", FCVAR_NOTIFY);
