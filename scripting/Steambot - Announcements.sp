@@ -5,6 +5,9 @@
 #include <socket>
 #include <colorvariables>
 
+//Plugin Include
+#include <steambot/Steambot-Announcements>
+
 #pragma semicolon 1
 #pragma newdecls required
 
@@ -15,20 +18,21 @@
 
 //Plugin Defines
 #define PLUGIN_NAME		"[Steambot] Announcements"
-#define PLUGIN_VERSION "1.0.0"
+#define PLUGIN_VERSION "1.0.1"
 #define SOCKET_STRING "%sSTEAMGROUP_POST_ANOUNCEMENT%i/%s/%s"
 
 ////////////////////
 //Globals
 
 //ConVars
-Handle hConVars[6];
+Handle hConVars[7];
 bool cv_bStatus;
 char cv_sBotIP[256];
 char cv_sBotPort[32];
 char cv_sBotPassword[32];
 int cv_iGroupID;
 float cv_fReconnect;
+float cv_fAntispam;
 
 //Config Globals
 Handle hAnnouncements_Name;
@@ -39,6 +43,7 @@ Handle hAnnouncements_Body;
 Handle hBotSocket;
 bool bConnected;
 Handle hReconnectTimer;
+Handle hAntispamTimer;
 
 ////////////////////
 //Plugin Info
@@ -51,6 +56,15 @@ public Plugin myinfo =
 	url = "http://www.drixevel.com/"
 };
 
+//Ask Plugin Load 2
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+	CreateNative("Steambot_Announce", Native_GenerateAnnouncement);
+	
+	RegPluginLibrary("Steambot-Announcements");
+	return APLRes_Success;
+}
+
 ////////////////////
 //Plugin Info
 public void OnPluginStart()
@@ -62,14 +76,23 @@ public void OnPluginStart()
 	hConVars[3] = CreateConVar("sm_steambot_announcements_bot_password", "", "Password to connect to the bot.", FCVAR_NOTIFY);
 	hConVars[4] = CreateConVar("sm_steambot_announcements_steamgroup_id", "", "The ID of the steamgroup to post announcements in.", FCVAR_NOTIFY);
 	hConVars[5] = CreateConVar("sm_steambot_announcements_bot_reconnect", "10.0", "Time in seconds on bot disconnect to attempt a reconnect.", FCVAR_NOTIFY, true, 1.0);
+	hConVars[6] = CreateConVar("sm_steambot_announcements_antispam", "120.0", "Time in seconds to delay announcements to the steamgroup.", FCVAR_NOTIFY, true, 1.0);
 	
 	RegAdminCmd("sm_announce", SendGroupAnnouncement, ADMFLAG_ROOT, "Post an announcement to the steamgroup.");
+	RegAdminCmd("sm_ann", SendGroupAnnouncement, ADMFLAG_ROOT, "Post an announcement to the steamgroup.");
+	RegAdminCmd("sm_event", SendGroupAnnouncement, ADMFLAG_ROOT, "Post an announcement to the steamgroup.");
 	RegAdminCmd("sm_manualannounce", ManualGroupAnnouncement, ADMFLAG_ROOT, "Post a manual announcement to the steamgroup.");
+	RegAdminCmd("sm_manannounce", ManualGroupAnnouncement, ADMFLAG_ROOT, "Post a manual announcement to the steamgroup.");
+	RegAdminCmd("sm_manann", ManualGroupAnnouncement, ADMFLAG_ROOT, "Post a manual announcement to the steamgroup.");
 	RegAdminCmd("sm_reloadannouncements", ReloadAnnouncementsConfig, ADMFLAG_ROOT, "Reloads the announcements configurations data.");
+	RegAdminCmd("sm_reloadannounce", ReloadAnnouncementsConfig, ADMFLAG_ROOT, "Reloads the announcements configurations data.");
+	RegAdminCmd("sm_relann", ReloadAnnouncementsConfig, ADMFLAG_ROOT, "Reloads the announcements configurations data.");
 	
 	hAnnouncements_Name = CreateArray(ByteCountToCells(256));
 	hAnnouncements_Title = CreateArray(ByteCountToCells(256));
 	hAnnouncements_Body = CreateArray(ByteCountToCells(256));
+	
+	AutoExecConfig();
 }
 
 ////////////////////
@@ -82,6 +105,7 @@ public void OnConfigsExecuted()
 	GetConVarString(hConVars[3], cv_sBotPassword, sizeof(cv_sBotPassword));
 	cv_iGroupID = GetConVarInt(hConVars[4]);
 	cv_fReconnect = GetConVarFloat(hConVars[5]);
+	cv_fAntispam = GetConVarFloat(hConVars[6]);
 	
 	if (cv_bStatus)
 	{
@@ -100,6 +124,12 @@ public Action SendGroupAnnouncement(int client, int args)
 	if (!bConnected)
 	{
 		CReplyToCommand(client, "%t", "error connecting public message");
+		return Plugin_Handled;
+	}
+	
+	if (hAntispamTimer != null)
+	{
+		CReplyToCommand(client, "%t", "antispam warning");
 		return Plugin_Handled;
 	}
 	
@@ -133,6 +163,12 @@ public int MenuHandle_AnnouncementsMenu(Menu menu, MenuAction action, int param1
 				return;
 			}
 			
+			if (hAntispamTimer != null)
+			{
+				CReplyToCommand(param1, "%t", "antispam warning");
+				return;
+			}
+			
 			char sID[32]; char sName[256];
 			GetMenuItem(menu, param2, sID, sizeof(sID), _, sName, sizeof(sName));
 			int iID = StringToInt(sID);
@@ -143,7 +179,7 @@ public int MenuHandle_AnnouncementsMenu(Menu menu, MenuAction action, int param1
 			char sBody[256];
 			GetArrayString(hAnnouncements_Body, iID, sBody, sizeof(sBody));
 			
-			GenerateGroupAnnouncement(sTitle, sBody);
+			GenerateGroupAnnouncement(param1, sTitle, sBody);
 			CPrintToChat(param1, "%t", "config announcement successfully sent", sName);
 		}
 		case MenuAction_Cancel:CloseHandle(menu);
@@ -172,13 +208,19 @@ public Action ManualGroupAnnouncement(int client, int args)
 		return Plugin_Handled;
 	}
 	
+	if (hAntispamTimer != null)
+	{
+		CReplyToCommand(client, "%t", "antispam warning");
+		return Plugin_Handled;
+	}
+	
 	char sTitle[256];
 	GetCmdArg(1, sTitle, sizeof(sTitle));
 	
 	char sBody[256];
 	GetCmdArg(2, sBody, sizeof(sBody));
 	
-	GenerateGroupAnnouncement(sTitle, sBody);
+	GenerateGroupAnnouncement(client, sTitle, sBody);
 	CReplyToCommand(client, "%t", "manual announcement sent successfully", sTitle, sBody);
 	
 	return Plugin_Handled;
@@ -249,11 +291,35 @@ void LoadAnnouncementsConfig()
 	LogMessage("%t", "successfully parsed configuration file", GetArraySize(hAnnouncements_Name));
 }
 
-bool GenerateGroupAnnouncement(const char[] sTitle, const char[] sBody)
+bool GenerateGroupAnnouncement(int client, const char[] sTitle, const char[] sBody)
 {
+	if (!bConnected)
+	{
+		CReplyToCommand(client, "%t", "error connecting public message");
+		return false;
+	}
+	
+	if (hAntispamTimer != null)
+	{
+		CReplyToCommand(client, "%t", "antispam warning");
+		return false;
+	}
+	
 	char sBuffer[1024];
 	Format(sBuffer, sizeof(sBuffer), SOCKET_STRING, cv_sBotPassword, cv_iGroupID, sTitle, sBody);
 	SocketSend(hBotSocket, sBuffer, sizeof(sBuffer));
+	
+	if (cv_fAntispam > 0.0)
+	{
+		hAntispamTimer = CreateTimer(cv_fAntispam, Timer_Antispam);
+	}
+	
+	return true;
+}
+
+public Action Timer_Antispam(Handle timer)
+{
+	hAntispamTimer = null;
 }
 
 void AttemptBotConnection()
@@ -301,4 +367,22 @@ public int OnChildSocketDisconnected(Handle socket, any hFile)
 public Action Timer_Reconnect(Handle timer, any data)
 {
     AttemptBotConnection();
-}  
+}
+
+//Natives
+public int Native_GenerateAnnouncement(Handle plugin, int numParams)
+{
+	int size;
+	
+	GetNativeStringLength(2, size);
+	
+	char[] sTitle = new char[size];
+	GetNativeString(2, sTitle, size);
+	
+	GetNativeStringLength(3, size);
+	
+	char[] sBody = new char[size];
+	GetNativeString(3, sBody, size);
+	
+	return GenerateGroupAnnouncement(GetNativeCell(1), sTitle, sBody);
+}
