@@ -1,4 +1,4 @@
-////////////////////
+ ////////////////////
 //Includes & Pragmas
 #include <sourcemod>
 //#include <drixevel>	//Custom Include
@@ -18,7 +18,7 @@
 
 //Plugin Defines
 #define PLUGIN_NAME		"[Steambot] Announcements"
-#define PLUGIN_VERSION "1.0.1"
+#define PLUGIN_VERSION "1.0.0"
 #define SOCKET_STRING "%sSTEAMGROUP_POST_ANOUNCEMENT%i/%s/%s"
 
 ////////////////////
@@ -49,10 +49,10 @@ Handle hAntispamTimer;
 //Plugin Info
 public Plugin myinfo = 
 {
-	name = PLUGIN_NAME,
-	author = "Keith Warren (Drixevel) | Steambot by Arkarr",
-	description = "This is a module for the Steambot by Arkarr which allows admins and server operators to send announcements to their steamgroups.",
-	version = PLUGIN_VERSION,
+	name = PLUGIN_NAME, 
+	author = "Keith Warren (Drixevel) | Steambot by Arkarr", 
+	description = "This is a module for the Steambot by Arkarr which allows admins and server operators to send announcements to their steamgroups.", 
+	version = PLUGIN_VERSION, 
 	url = "http://www.drixevel.com/"
 };
 
@@ -325,49 +325,55 @@ public Action Timer_Antispam(Handle timer)
 
 void AttemptBotConnection()
 {
-    bConnected = false;
-    hBotSocket = SocketCreate(SOCKET_TCP, OnClientSocketError);
-    SocketConnect(hBotSocket, OnClientSocketConnected, OnChildSocketReceive, OnChildSocketDisconnected, cv_sBotIP, StringToInt(cv_sBotPort));
+	if (strlen(cv_sBotIP) < 1 || strlen(cv_sBotPort) < 1)
+	{
+		SetFailState("Error creating bot connection, your IP and/or port ConVars are empty.");
+		return;
+	}
+	
+	bConnected = false;
+	hBotSocket = SocketCreate(SOCKET_TCP, OnClientSocketError);
+	SocketConnect(hBotSocket, OnClientSocketConnected, OnChildSocketReceive, OnChildSocketDisconnected, cv_sBotIP, StringToInt(cv_sBotPort));
 }
 
 public int OnClientSocketConnected(Handle socket, any arg)
 {
-    bConnected = true;
-    
-    if (hReconnectTimer != null)
-    {
-        KillTimer(hReconnectTimer);
-        hReconnectTimer = null;
-    }
-    
-    LogMessage("%t", "bot connected successfully");
+	bConnected = true;
+	
+	if (hReconnectTimer != null)
+	{
+		KillTimer(hReconnectTimer);
+		hReconnectTimer = null;
+	}
+	
+	LogMessage("%t", "bot connected successfully");
 }
 
 public int OnClientSocketError(Handle socket, const int errorType, const int errorNum, any ary)
 {
-    bConnected = false;
-    CloseHandle(socket);
-    
-    LogError("%t", "bot connected failure");
+	bConnected = false;
+	CloseHandle(socket);
+	
+	LogError("%t", "bot connected failure");
 }
 
 public int OnChildSocketReceive(Handle socket, char[] receiveData, const int dataSize, any hFile)
 {
-    //Nothing to do.
+	//Nothing to do.
 }
 
 public int OnChildSocketDisconnected(Handle socket, any hFile)
 {
-    bConnected = false;
-    CloseHandle(socket);
-    
-    hReconnectTimer = CreateTimer(cv_fReconnect, Timer_Reconnect, _, TIMER_REPEAT);
-    LogError("%t", "bot disconnected", RoundFloat(cv_fReconnect));
+	bConnected = false;
+	CloseHandle(socket);
+	
+	hReconnectTimer = CreateTimer(cv_fReconnect, Timer_Reconnect, _, TIMER_REPEAT);
+	LogError("%t", "bot disconnected", RoundFloat(cv_fReconnect));
 }
 
 public Action Timer_Reconnect(Handle timer, any data)
 {
-    AttemptBotConnection();
+	AttemptBotConnection();
 }
 
 //Natives
@@ -386,4 +392,4 @@ public int Native_GenerateAnnouncement(Handle plugin, int numParams)
 	GetNativeString(3, sBody, size);
 	
 	return GenerateGroupAnnouncement(GetNativeCell(1), sTitle, sBody);
-}
+} 
