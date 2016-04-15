@@ -49,6 +49,12 @@
 		"en"		"Error parsing configuration file for steambot announcements, empty string in section {1}!"
 	}
 	
+	"successfully parsed configuration file"
+	{
+		"#format"	"{1:i}"
+		"en"		"Configuration file parsed successfully with {1} entries."
+	}
+	
 	"antispam warning"
 	{
 		"en"		"You cannot send a new announcement at his time, please wait."

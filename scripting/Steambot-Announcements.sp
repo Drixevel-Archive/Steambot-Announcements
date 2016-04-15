@@ -18,7 +18,7 @@
 
 //Plugin Defines
 #define PLUGIN_NAME		"[Steambot] Announcements"
-#define PLUGIN_VERSION "1.0.0"
+#define PLUGIN_VERSION "1.0.1"
 #define SOCKET_STRING "%sSTEAMGROUP_POST_ANOUNCEMENT%i/%s/%s"
 
 ////////////////////
