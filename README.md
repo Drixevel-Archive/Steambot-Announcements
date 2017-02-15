@@ -1,3 +1,2 @@
-# Steambot-Announcements
-
-This is a module for the Steambot by Arkarr which allows admins and server operators to send announcements to their steamgroups.
+# Sourcemod - Steambot Announcements
+A Sourcemod project which takes advantage of the Steambot API to allows server operators to send steam announcements to the designated Steamgroups for the Source Engine.
