@@ -1,2 +1,0 @@
-# Sourcemod - Steambot Announcements
-A Sourcemod project which takes advantage of the Steambot API to allows server operators to send steam announcements to the designated Steamgroups for the Source Engine.

@@ -50,10 +50,10 @@ Handle hAntispamTimer;
 public Plugin myinfo = 
 {
 	name = PLUGIN_NAME, 
-	author = "Keith Warren (Drixevel) | Steambot by Arkarr", 
+	author = "Keith Warren (Shaders Allen) | Steambot by Arkarr", 
 	description = "This is a module for the Steambot by Arkarr which allows admins and server operators to send announcements to their steamgroups.", 
 	version = PLUGIN_VERSION, 
-	url = "http://www.drixevel.com/"
+	url = "http://www.shadersallen.com/"
 };
 
 //Ask Plugin Load 2
